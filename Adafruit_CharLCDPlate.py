@@ -10,6 +10,7 @@
 
 from Adafruit_I2C import Adafruit_I2C
 from time import sleep
+import atexit
 
 class Adafruit_CharLCDPlate(Adafruit_I2C):
 
@@ -36,11 +37,10 @@ class Adafruit_CharLCDPlate(Adafruit_I2C):
     RED                     = 0x01
     GREEN                   = 0x02
     BLUE                    = 0x04
-    YELLOW                  = RED + GREEN
-    TEAL                    = GREEN + BLUE
-    VIOLET                  = RED + BLUE
-    WHITE                   = RED + GREEN + BLUE
-    ON                      = RED + GREEN + BLUE
+    YELLOW                  = RED | GREEN 
+    TEAL                    = GREEN | BLUE 
+    VIOLET                  = RED | BLUE  
+    WHITE                   = RED | GREEN | BLUE
 
     # LCD Commands
     LCD_CLEARDISPLAY        = 0x01
@@ -96,7 +96,7 @@ class Adafruit_CharLCDPlate(Adafruit_I2C):
         # sets up all the input pins, pull-ups, etc. for the Pi Plate.
         self.i2c.bus.write_i2c_block_data(
           self.i2c.address, 0, 
-          [ 0b00111111,   # IODIRA    R+G LEDs=outputs, buttons=inputs
+          [ 0b00011111,   # IODIRA    R+G LEDs=outputs, lcd backlight, buttons=inputs ,modify by ArduinoKing
             self.ddrb ,   # IODIRB    LCD D7=input, Blue LED=output
             0b00111111,   # IPOLA     Invert polarity on button inputs
             0b00000000,   # IPOLB
@@ -108,7 +108,7 @@ class Adafruit_CharLCDPlate(Adafruit_I2C):
             0b00000000,   # INTCONB
             0b00000000,   # IOCON
             0b00000000,   # IOCON
-            0b00111111,   # GPPUA     Enable pull-ups on buttons
+            0b00011111,   # GPPUA     Enable pull-ups on buttons ,modify by ArduinoKing
             0b00000000,   # GPPUB
             0b00000000,   # INTFA
             0b00000000,   # INTFB
@@ -268,7 +268,7 @@ class Adafruit_CharLCDPlate(Adafruit_I2C):
     # Any code using this newer version of the library should
     # consider adding an atexit() handler that calls this.
     def stop(self):
-        self.porta = 0b11000000  # Turn off LEDs on the way out
+        self.porta = 0b11100000  # Turn off LEDs on the way out
         self.portb = 0b00000001
         sleep(0.0015)
         self.i2c.bus.write_byte_data(
@@ -413,15 +413,23 @@ class Adafruit_CharLCDPlate(Adafruit_I2C):
             self.write(line, True)       # Issue substring
 
 
-    def backlight(self, color):
+    def ledRGB(self, color):
         c          = ~color
-        self.porta = (self.porta & 0b00111111) | ((c & 0b011) << 6)
-        self.portb = (self.portb & 0b11111110) | ((c & 0b100) >> 2)
-        # Has to be done as two writes because sequential operation is off.
+	self.porta = (self.porta & 0b00111111) | ((c & 0b011) << 6)  #modify by ArduinoKing
+	self.portb = (self.portb & 0b11111110) | ((c & 0b100) >> 2)  #modify by ArduinoKing
+        
+	# Has to be done as two writes because sequential operation is off.
         self.i2c.bus.write_byte_data(
           self.i2c.address, self.MCP23017_GPIOA, self.porta)
         self.i2c.bus.write_byte_data(
           self.i2c.address, self.MCP23017_GPIOB, self.portb)
+
+    def backlight(self, on):
+        c          = 0 if on else 1
+	self.porta = (self.porta & 0b11011111) | ((c & 0x1) << 5) # only write backlight led
+
+        self.i2c.bus.write_byte_data(
+          self.i2c.address, self.MCP23017_GPIOA, self.porta)
 
 
     # Read state of single button
@@ -440,24 +448,26 @@ class Adafruit_CharLCDPlate(Adafruit_I2C):
 if __name__ == '__main__':
 
     lcd = Adafruit_CharLCDPlate()
+    atexit.register(lcd.stop)
     lcd.begin(16, 2)
     lcd.clear()
+    lcd.backlight(True)
     lcd.message("Adafruit RGB LCD\nPlate w/Keypad!")
     sleep(1)
 
     col = (('Red' , lcd.RED) , ('Yellow', lcd.YELLOW), ('Green' , lcd.GREEN),
            ('Teal', lcd.TEAL), ('Blue'  , lcd.BLUE)  , ('Violet', lcd.VIOLET),
-           ('Off' , lcd.OFF) , ('On'    , lcd.ON))
+           ('Off' , lcd.OFF) , ('White' , lcd.WHITE))
 
     print "Cycle thru backlight colors"
     for c in col:
        print c[0]
        lcd.clear()
        lcd.message(c[0])
-       lcd.backlight(c[1])
+       lcd.ledRGB(c[1])
        sleep(0.5)
 
-    btn = ((lcd.SELECT, 'Select', lcd.ON),
+    btn = ((lcd.SELECT, 'Select', lcd.OFF),
            (lcd.LEFT  , 'Left'  , lcd.RED),
            (lcd.UP    , 'Up'    , lcd.BLUE),
            (lcd.DOWN  , 'Down'  , lcd.GREEN),
@@ -468,12 +478,14 @@ if __name__ == '__main__':
     lcd.message("Try buttons")
     prev = -1
     while True:
+	sleep(0.1)
+        buttonState = lcd.buttons()
         for b in btn:
-            if lcd.buttonPressed(b[0]):
+            if (buttonState & (1 << b[0])) != 0:
                 if b is not prev:
                     print b[1]
                     lcd.clear()
                     lcd.message(b[1])
-                    lcd.backlight(b[2])
+                    lcd.ledRGB(b[2])
                     prev = b
                 break
