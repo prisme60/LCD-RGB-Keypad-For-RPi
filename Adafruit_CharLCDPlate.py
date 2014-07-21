@@ -452,7 +452,7 @@ if __name__ == '__main__':
     lcd.begin(16, 2)
     lcd.clear()
     lcd.backlight(True)
-    lcd.message("Adafruit RGB LCD\nPlate w/Keypad!")
+    lcd.message("LCD + RGB led\nPlate w/Keypad!")
     sleep(1)
 
     col = (('Red' , lcd.RED) , ('Yellow', lcd.YELLOW), ('Green' , lcd.GREEN),

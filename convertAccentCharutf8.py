@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+from GlyphSprites import Sprites
 
 
 def enc(letter):
@@ -9,97 +10,44 @@ def enc(letter):
 
 
 dictGlyph = {
-    enc(u'é') : ('e',
-          [0b00100,
-           0b01000,
-           0b01110,
-           0b11011,
-           0b11111,
-           0b11000,
-           0b01111,
-           0b00000]),
-    enc(u'è') : ('e',
-          [0b01000,
-           0b00100,
-           0b01110,
-           0b11011,
-           0b11111,
-           0b11000,
-           0b01111,
-           0b00000]),
-    enc(u'ê') : ('e',
-          [0b00100,
-           0b01010,
-           0b01110,
-           0b11011,
-           0b11111,
-           0b11000,
-           0b01111,
-           0b00000]),
-    enc(u'ë') : ('e',
-          [0b01010,
-           0b00000,
-           0b01110,
-           0b11011,
-           0b11111,
-           0b11000,
-           0b01111,
-           0b00000]),
+    enc(u'é') : ('e',Sprites.letterEacute),
+    enc(u'è') : ('e',Sprites.letterEgrave),
+    enc(u'ê') : ('e',Sprites.letterEcirc),
+    enc(u'ë') : ('e',Sprites.letterEuml),
     enc(u'É') : ('E',None),
     enc(u'È') : ('E',None),
     enc(u'Ê') : ('E',None),
     enc(u'Ë') : ('E',None),
-    enc(u'à') : ('a',
-          [0b00000,
-           0b00000,
-           0b01110,
-           0b00011,
-           0b01111,
-           0b11011,
-           0b01111,
-           0b00000]),
+    enc(u'à') : ('a',Sprites.letterAgrave),
     enc(u'À') : ('A',None),
-    enc(u'ù') : ('u',
-          [0b00000,
-           0b00000,
-           0b10001,
-           0b10001,
-           0b10001,
-           0b10001,
-           0b01111,
-           0b00000]),
-    enc(u'ô') : ('o',
-          [0b00000,
-           0b00000,
-           0b01110,
-           0b10001,
-           0b10001,
-           0b10001,
-           0b01110,
-           0b00000]),
+    enc(u'ù') : ('u',Sprites.letterUgrave),
+    enc(u'ô') : ('o',Sprites.letterOcirc),
     enc(u'Ô') : ('O', None)
 }
 
-def convertMsg(message):
-    return convertMsgParam(message, [], [])
+maxCustomChar = 8
 
-def convertMsgParam(message,glyphList,charList):
+def convertMsg(message):
+    return convertMsgParam(message, [], [], maxCustomChar)
+
+def convertMsgParam(message,glyphList,charList,maxChar):
     """ return message and glyph list """
     newMsg = ''
+    offsetGlyphList = len(glyphList) - len(charList) 
 
     for c in message:
         print("read c =" + c)
         if c in dictGlyph:
             if c in charList: #glyph has already been added to the list, so use it!
-                newMsg += chr(charList.index(c))
+                newMsg += chr(offsetGlyphList + charList.index(c))
             else:
                 glyphTuple = dictGlyph[c]
-                if glyphTuple[1] != None: # is a glyph defined ?
-                    glyphList.append(dictGlyph[c])
+                if len(glyphList) < maxChar and glyphTuple[1] != None: # is there still a free place? is a glyph defined ?
+                    glyphList.append(glyphTuple[1])
                     charList.append(c)
-                    newMsg += chr(len(glyphList))
+                    newMsg += chr(len(glyphList)-1)
                 else:
-                    newMsg += glyphTuple[0] #use replacement char (because there is no glyph) 
+                    newMsg += glyphTuple[0] #use replacement char (because there is no glyph or because there is no more place for custom char) 
         else:
             newMsg += c #add normal char to the message
     return (newMsg,glyphList,charList)

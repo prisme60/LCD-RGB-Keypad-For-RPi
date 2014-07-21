@@ -1,8 +1,13 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 
 from time import sleep
-from Adafruit_CharLCDPlate import Adafruit_CharLCDPlate
+import copy
 import atexit
+from Adafruit_CharLCDPlate import Adafruit_CharLCDPlate
+import convertAccentCharutf8 
+from GlyphSprites import Sprites
 
 # Initialize the LCD plate.  Should auto-detect correct I2C bus.  If not,
 # pass '0' for early 256 MB Model B boards or '1' for all later versions
@@ -10,9 +15,19 @@ lcd = Adafruit_CharLCDPlate()
 atexit.register(lcd.stop)
 lcd.backlight(True)
 
+
+lcd.createChar(0,Sprites.horizontalLines)
+lcd.createChar(1,Sprites.musicalNote)
+lcd.createChar(2,Sprites.bellSymbol)
+lcd.createChar(3,Sprites.hourglassFull)
+lcd.createChar(4,Sprites.hourglassMid)
+lcd.createChar(5,Sprites.hourglassEmpty)
+lcd.createChar(6,Sprites.empty)
+lcd.createChar(7,Sprites.empty)
+
 # Clear display and show greeting, pause 1 sec
 lcd.clear()
-lcd.message("Adafruit RGB LCD\nPlate w/Keypad!")
+lcd.message("Adafruit RGB LCD\nPlate w/Keypad!\x00")
 sleep(1)
 
 # Cycle through backlight colors
@@ -23,21 +38,31 @@ for c in col:
     sleep(.5)
 
 # Poll buttons, display message & set backlight accordingly
-btn = ((lcd.LEFT  , 'Red Red Wine'              , lcd.RED),
-       (lcd.UP    , 'Sita sings\nthe blues'     , lcd.BLUE),
-       (lcd.DOWN  , 'I see fields\nof green'    , lcd.GREEN),
-       (lcd.RIGHT , 'Purple mountain\nmajesties', lcd.VIOLET),
-       (lcd.SELECT, ''                          , lcd.WHITE))
+btn = ((lcd.LEFT  , u'\x00Vin très rouge\nà boire'                    , lcd.RED  , [Sprites.horizontalLines]),
+       (lcd.UP    , u'\x00  Sita sings  \x01\n\x00  the blues   \x01'  , lcd.BLUE , [Sprites.musicalNote,Sprites.bellSymbol]),
+       (lcd.DOWN  , u'\x00see fields\n\x00 of green'                   , lcd.GREEN, [Sprites.bellSymbol]),
+       (lcd.RIGHT , u'Purple mountain\nmajesties\x00\x01\x02'          , lcd.VIOLET,[Sprites.hourglassFull,Sprites.hourglassMid,Sprites.hourglassEmpty]),
+       (lcd.SELECT, u''                                                , lcd.WHITE, []))
 prev = -1
 while True:
     sleep(.1)
+    lcd.scrollDisplayLeft()
     buttonState = lcd.buttons()
     for b in btn:
         if (buttonState & (1 << b[0])) != 0:
             if b is not prev:
+                (convertedMessage,glyphList,charList) = convertAccentCharutf8.convertMsgParam(b[1].encode('cp1252'),copy.deepcopy(b[3]),[],8)
+                print(repr((convertedMessage,glyphList,charList)))
+                for (i,glyph) in enumerate(glyphList) : #copy glyphs to the LCD memory (b[3] + accent chars)
+                    print('createChar(' + repr(i) + ',' + repr(glyph) + ')')
+                    lcd.createChar(i, glyph)
+                sleep(.5)
                 print b[1]
                 lcd.clear()
-                lcd.message(b[1])
+                lcd.message(convertedMessage)
                 lcd.ledRGB(b[2])
+                #sleep(2)
+                #lcd.clear()
+                #lcd.message('Displays special\n\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09|||||||')
                 prev = b
             break
