@@ -17,13 +17,6 @@ lcd.backlight(True)
 
 
 lcd.createChar(0,Sprites.horizontalLines)
-lcd.createChar(1,Sprites.musicalNote)
-lcd.createChar(2,Sprites.bellSymbol)
-lcd.createChar(3,Sprites.hourglassFull)
-lcd.createChar(4,Sprites.hourglassMid)
-lcd.createChar(5,Sprites.hourglassEmpty)
-lcd.createChar(6,Sprites.empty)
-lcd.createChar(7,Sprites.empty)
 
 # Clear display and show greeting, pause 1 sec
 lcd.clear()
@@ -38,7 +31,7 @@ for c in col:
     sleep(.5)
 
 # Poll buttons, display message & set backlight accordingly
-btn = ((lcd.LEFT  , u'\x00Vin très rouge\nà boire'                    , lcd.RED  , [Sprites.horizontalLines]),
+btn = ((lcd.LEFT  , u'\x00Vin très rouge à boire dans le vignoble du chateau', lcd.RED, [Sprites.horizontalLines]),
        (lcd.UP    , u'\x00  Sita sings  \x01\n\x00  the blues   \x01'  , lcd.BLUE , [Sprites.musicalNote,Sprites.bellSymbol]),
        (lcd.DOWN  , u'\x00see fields\n\x00 of green'                   , lcd.GREEN, [Sprites.bellSymbol]),
        (lcd.RIGHT , u'Purple mountain\nmajesties\x00\x01\x02'          , lcd.VIOLET,[Sprites.hourglassFull,Sprites.hourglassMid,Sprites.hourglassEmpty]),
@@ -54,7 +47,6 @@ while True:
                 (convertedMessage,glyphList,charList) = convertAccentCharutf8.convertMsgParam(b[1].encode('cp1252'),copy.deepcopy(b[3]),[],8)
                 print(repr((convertedMessage,glyphList,charList)))
                 for (i,glyph) in enumerate(glyphList) : #copy glyphs to the LCD memory (b[3] + accent chars)
-                    print('createChar(' + repr(i) + ',' + repr(glyph) + ')')
                     lcd.createChar(i, glyph)
                 sleep(.5)
                 print b[1]

@@ -36,7 +36,6 @@ def convertMsgParam(message,glyphList,charList,maxChar):
     offsetGlyphList = len(glyphList) - len(charList) 
 
     for c in message:
-        print("read c =" + c)
         if c in dictGlyph:
             if c in charList: #glyph has already been added to the list, so use it!
                 newMsg += chr(offsetGlyphList + charList.index(c))
