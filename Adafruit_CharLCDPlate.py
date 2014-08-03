@@ -72,17 +72,29 @@ class Adafruit_CharLCDPlate(Adafruit_I2C):
     LCD_MOVERIGHT   = 0x04
     LCD_MOVELEFT    = 0x00
 
+    # Line addresses for up to 4 line displays.  Maps line number to DDRAM address for line.
+    LINE_ADDRESSES = { 1: 0xC0, 2: 0x94, 3: 0xD4 }
+
+    # Truncation constants for message function truncate parameter.
+    NO_TRUNCATE       = 0
+    TRUNCATE          = 1
+    TRUNCATE_ELLIPSIS = 2
 
     # ----------------------------------------------------------------------
     # Constructor
 
-    def __init__(self, busnum=-1, addr=0x20, debug=False):
+    def __init__(self, busnum=-1, addr=0x20, debug=False, backlight=True):
 
         self.i2c = Adafruit_I2C(addr, busnum, debug)
 
         # I2C is relatively slow.  MCP output port states are cached
         # so we don't need to constantly poll-and-change bit states.
-        self.porta, self.portb, self.ddrb = 0, 0, 0b00010000
+        self.porta, self.portb, self.ddrb = 0, 0, 0b00000010
+
+        # Set initial backlight color.
+        c          = (1<<5) if backlight else 0
+        self.porta = (self.porta & 0b00111111) | (0b011 << 6) | c #modify by ArduinoKing
+        self.portb = (self.portb & 0b11111110) | (0b100 >> 2)  #modify by ArduinoKing
 
         # Set MCP23017 IOCON register to Bank 0 with sequential operation.
         # If chip is already set for Bank 0, this will just write to OLATB,
@@ -187,7 +199,7 @@ class Adafruit_CharLCDPlate(Adafruit_I2C):
         """ Send command/data to LCD """
 
         # If pin D7 is in input state, poll LCD busy flag until clear.
-        if self.ddrb & 0b00010000:
+        if self.ddrb & 0b00000010:
             lo = (self.portb & 0b00000001) | 0b01000000
             hi = lo | 0b00100000 # E=1 (strobe)
             self.i2c.bus.write_byte_data(
@@ -204,7 +216,7 @@ class Adafruit_CharLCDPlate(Adafruit_I2C):
             self.portb = lo
 
             # Polling complete, change D7 pin to output
-            self.ddrb &= 0b11101111
+            self.ddrb &= 0b11111101
             self.i2c.bus.write_byte_data(self.i2c.address,
               self.MCP23017_IODIRB, self.ddrb)
 
@@ -249,7 +261,7 @@ class Adafruit_CharLCDPlate(Adafruit_I2C):
         # If a poll-worthy instruction was issued, reconfigure D7
         # pin as input to indicate need for polling on next call.
         if (not char_mode) and (value in self.pollables):
-            self.ddrb |= 0b00010000
+            self.ddrb |= 0b00000010
             self.i2c.bus.write_byte_data(self.i2c.address,
               self.MCP23017_IODIRB, self.ddrb)
 
@@ -260,6 +272,7 @@ class Adafruit_CharLCDPlate(Adafruit_I2C):
     def begin(self, cols, lines):
         self.currline = 0
         self.numlines = lines
+        self.numcols = cols
         self.clear()
 
 
@@ -404,13 +417,23 @@ class Adafruit_CharLCDPlate(Adafruit_I2C):
         self.write(self.LCD_SETDDRAMADDR)
 
 
-    def message(self, text):
+    def message(self, text, truncate=NO_TRUNCATE):
         """ Send string to LCD. Newline wraps to second line"""
         lines = str(text).split('\n')    # Split at newline(s)
         for i, line in enumerate(lines): # For each substring...
-            if i > 0:                    # If newline(s),
-                self.write(0xC0)         #  set DDRAM address to 2nd line
-            self.write(line, True)       # Issue substring
+            address = self.LINE_ADDRESSES.get(i, None)
+            if address is not None:      # If newline(s),
+                self.write(address)      #  set DDRAM address to line
+            # Handle appropriate truncation if requested.
+            linelen = len(line)
+            if truncate == self.TRUNCATE and linelen > self.numcols:
+                # Hard truncation of line.
+                self.write(line[0:self.numcols], True)
+            elif truncate == self.TRUNCATE_ELLIPSIS and linelen > self.numcols:
+                # Nicer truncation with ellipses.
+                self.write(line[0:self.numcols-3] + '...', True)
+            else:
+                self.write(line, True)
 
 
     def ledRGB(self, color):
