@@ -25,10 +25,7 @@ dictGlyph = {
 
 maxCustomChar = 8
 
-def convertMsg(message):
-    return convertMsgParam(message, [], [], maxCustomChar)
-
-def convertMsgParam(message,glyphList,charList,maxChar):
+def convertMsg(message,glyphList=[],charList=[],maxChar=maxCustomChar):
     """ return message and glyph list """
     newMsg = ''
     offsetGlyphList = len(glyphList) - len(charList) 

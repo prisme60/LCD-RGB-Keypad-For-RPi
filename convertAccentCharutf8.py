@@ -4,7 +4,6 @@
 import sys
 from GlyphSprites import Sprites
 
-
 def enc(letter):
     return letter.encode('cp1252')
 
@@ -27,10 +26,7 @@ dictGlyph = {
 
 maxCustomChar = 8
 
-def convertMsg(message):
-    return convertMsgParam(message, [], [], maxCustomChar)
-
-def convertMsgParam(message,glyphList,charList,maxChar):
+def convertMsg(message,glyphList=[],charList=[],maxChar=maxCustomChar):
     """ return message and glyph list """
     newMsg = ''
     offsetGlyphList = len(glyphList) - len(charList) 
@@ -50,7 +46,6 @@ def convertMsgParam(message,glyphList,charList,maxChar):
         else:
             newMsg += c #add normal char to the message
     return (newMsg,glyphList,charList)
-
 
 if __name__ == '__main__':
     print(repr(dictGlyph))

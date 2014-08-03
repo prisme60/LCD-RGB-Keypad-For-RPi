@@ -44,7 +44,7 @@ while True:
     for b in btn:
         if (buttonState & (1 << b[0])) != 0:
             if b is not prev:
-                (convertedMessage,glyphList,charList) = convertAccentCharutf8.convertMsgParam(b[1].encode('cp1252'),copy.deepcopy(b[3]),[],8)
+                (convertedMessage,glyphList,charList) = convertAccentCharutf8.convertMsg(b[1].encode('cp1252'),copy.deepcopy(b[3]),[],8)
                 print(repr((convertedMessage,glyphList,charList)))
                 for (i,glyph) in enumerate(glyphList) : #copy glyphs to the LCD memory (b[3] + accent chars)
                     lcd.createChar(i, glyph)
