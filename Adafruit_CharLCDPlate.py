@@ -415,10 +415,10 @@ class Adafruit_CharLCDPlate(Adafruit_I2C):
 
     def ledRGB(self, color):
         c          = ~color
-	self.porta = (self.porta & 0b00111111) | ((c & 0b011) << 6)  #modify by ArduinoKing
-	self.portb = (self.portb & 0b11111110) | ((c & 0b100) >> 2)  #modify by ArduinoKing
+        self.porta = (self.porta & 0b00111111) | ((c & 0b011) << 6)  #modify by ArduinoKing
+        self.portb = (self.portb & 0b11111110) | ((c & 0b100) >> 2)  #modify by ArduinoKing
         
-	# Has to be done as two writes because sequential operation is off.
+        # Has to be done as two writes because sequential operation is off.
         self.i2c.bus.write_byte_data(
           self.i2c.address, self.MCP23017_GPIOA, self.porta)
         self.i2c.bus.write_byte_data(
@@ -426,7 +426,7 @@ class Adafruit_CharLCDPlate(Adafruit_I2C):
 
     def backlight(self, on):
         c          = 0 if on else 1
-	self.porta = (self.porta & 0b11011111) | ((c & 0x1) << 5) # only write backlight led
+        self.porta = (self.porta & 0b11011111) | ((c & 0x1) << 5) # only write backlight led
 
         self.i2c.bus.write_byte_data(
           self.i2c.address, self.MCP23017_GPIOA, self.porta)
@@ -459,9 +459,9 @@ if __name__ == '__main__':
            ('Teal', lcd.TEAL), ('Blue'  , lcd.BLUE)  , ('Violet', lcd.VIOLET),
            ('Off' , lcd.OFF) , ('White' , lcd.WHITE))
 
-    print "Cycle thru backlight colors"
+    print("Cycle thru backlight colors")
     for c in col:
-       print c[0]
+       print(c[0])
        lcd.clear()
        lcd.message(c[0])
        lcd.ledRGB(c[1])
@@ -473,17 +473,17 @@ if __name__ == '__main__':
            (lcd.DOWN  , 'Down'  , lcd.GREEN),
            (lcd.RIGHT , 'Right' , lcd.VIOLET))
     
-    print "Try buttons on plate"
+    print("Try buttons on plate")
     lcd.clear()
     lcd.message("Try buttons")
     prev = -1
     while True:
-	sleep(0.1)
+        sleep(0.1)
         buttonState = lcd.buttons()
         for b in btn:
             if (buttonState & (1 << b[0])) != 0:
                 if b is not prev:
-                    print b[1]
+                    print(b[1])
                     lcd.clear()
                     lcd.message(b[1])
                     lcd.ledRGB(b[2])

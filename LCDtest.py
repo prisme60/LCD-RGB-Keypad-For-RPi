@@ -31,11 +31,11 @@ for c in col:
     sleep(.5)
 
 # Poll buttons, display message & set backlight accordingly
-btn = ((lcd.LEFT  , u'\x00Vin très rouge à boire dans le vignoble du chateau', lcd.RED, [Sprites.horizontalLines]),
-       (lcd.UP    , u'\x00  Sita sings  \x01\n\x00  the blues   \x01'  , lcd.BLUE , [Sprites.musicalNote,Sprites.bellSymbol]),
-       (lcd.DOWN  , u'\x00see fields\n\x00 of green'                   , lcd.GREEN, [Sprites.bellSymbol]),
-       (lcd.RIGHT , u'Purple mountain\nmajesties\x00\x01\x02'          , lcd.VIOLET,[Sprites.hourglassFull,Sprites.hourglassMid,Sprites.hourglassEmpty]),
-       (lcd.SELECT, u''                                                , lcd.WHITE, []))
+btn = ((lcd.LEFT  , '\x00Vin très rouge à boire dans le vignoble du chateau', lcd.RED, [Sprites.horizontalLines]),
+       (lcd.UP    , '\x00  Sita sings  \x01\n\x00  the blues   \x01'  , lcd.BLUE , [Sprites.musicalNote,Sprites.bellSymbol]),
+       (lcd.DOWN  , '\x00see fields\n\x00 of green'                   , lcd.GREEN, [Sprites.bellSymbol]),
+       (lcd.RIGHT , 'Purple mountain\nmajesties\x00\x01\x02'          , lcd.VIOLET,[Sprites.hourglassFull,Sprites.hourglassMid,Sprites.hourglassEmpty]),
+       (lcd.SELECT, ''                                                , lcd.WHITE, []))
 prev = -1
 while True:
     sleep(.1)
@@ -49,7 +49,7 @@ while True:
                 for (i,glyph) in enumerate(glyphList) : #copy glyphs to the LCD memory (b[3] + accent chars)
                     lcd.createChar(i, glyph)
                 sleep(.5)
-                print b[1]
+                print(b[1])
                 lcd.clear()
                 lcd.message(convertedMessage)
                 lcd.ledRGB(b[2])
