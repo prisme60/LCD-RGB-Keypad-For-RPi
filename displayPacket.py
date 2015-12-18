@@ -6,7 +6,7 @@ from struct import *
 
 class DisplayPacket:
 
-    def __init__(self, user = None, message = None):
+    def __init__(self, user=None, message=None):
         self._user = user
         self._message = message
 

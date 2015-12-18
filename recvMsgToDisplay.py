@@ -2,7 +2,6 @@
 
 import socket
 import select
-import sys
 import os
 import stat
 from displayPacket import DisplayPacket
@@ -35,12 +34,12 @@ class RecvMsg:
     def __del__(self):
         self.sock.close()
 
-    def recvMsg(self, timeout = 1):
+    def recvMsg(self, timeout=1):
         dp = DisplayPacket()
         client = None
         try:
             rlist, wlist, elist = [self.sock], [], [self.sock]
-            rlist, wlist, elist = select.select(rlist,wlist,elist,timeout)
+            rlist, wlist, elist = select.select(rlist, wlist, elist, timeout)
 
             if self.sock in rlist:
                 print('fd is selected')#, file=sys.stderr)
@@ -51,14 +50,14 @@ class RecvMsg:
                 if len(data)>1:
                     print('sending data back to the client')#, file=sys.stderr)
                     client.sendall(b"OK")
-                    dp.message = dp.message.replace('\r','')# remove \r, because it is not well displayed on the display
+                    dp.message = dp.message.replace('\r', '')# remove \r, because it is not well displayed on the display
                 else:
                     print('no more data from', addr)#, file=sys.stderr)
             if self.sock in elist:
                 print('Seems to have a problem with the socket')#, file=sys.stderr)
         finally:
             # Clean up the connection
-            if client != None:
+            if client is not None:
                 client.close()
         return dp.user, dp.message
 
